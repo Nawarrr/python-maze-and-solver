@@ -1,10 +1,11 @@
 import turtle
 import math
-
+from collections import deque
 import copy
+
 window = turtle.Screen()
 window.bgcolor("black")
-window.title("Maze Game")
+window.title("Maze Solver")
 window.setup(700 , 700)
 
 class Pen(turtle.Turtle):
@@ -16,6 +17,7 @@ class Pen(turtle.Turtle):
         self.speed(0)
 
 
+
 class Player(turtle.Turtle):
     def __init__(self):
         turtle.Turtle.__init__(self)
@@ -23,38 +25,6 @@ class Player(turtle.Turtle):
         self.color("red")
         self.penup()
         self.speed(0)
-    def move_up(self):
-        x = self.xcor() 
-        y = self.ycor() +24
-        if (x ,y) not in walls :
-            self.goto(x , y)
-
-    def move_down(self):
-        x = self.xcor() 
-        y = self.ycor() -24
-        if (x ,y) not in walls :
-            self.goto(x , y)
-    def move_left(self):
-        x = self.xcor() -24
-        y = self.ycor() 
-        if (x ,y) not in walls :
-            self.goto(x , y)
-        
-    def move_right(self):
-        x = self.xcor() +24
-        y = self.ycor() 
-        if (x ,y) not in walls :
-            self.goto(x , y)
-
-    def is_collision(self,other):
-        x = self.xcor() - other.xcor()
-        y = self.ycor() - other.ycor()
-        distance = math.sqrt( x**2 + y**2)
-
-        if distance < 5 :
-            return True
-        else:
-            return False
 
 class Treasure(turtle.Turtle):
     def __init__(self):
@@ -69,17 +39,23 @@ class Treasure(turtle.Turtle):
     def destroy(self):
         self.goto(2000,2000)
         self.hideturtle()
-        
 
+class Path(turtle.Turtle):
+    def __init__(self):
+        turtle.Turtle.__init__(self)
+        self.shape("triangle")
+        self.color("Green")
+        self.penup()
+        self.speed(2)
 
 maze1 = [
-['X', 'P', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', '', '', 'T', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
-['X', '', '', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
-['X', '', '', 'X', '', '', '', '', '', 'X', 'X', 'X', 'X', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
-['X', '', '', 'X', 'X', 'X', '', '', '', '', '', '', '', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
-['X', 'X', '', '', '', 'X', '', '', 'X', 'X', 'X', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
-['X', 'X', '', '', '', '', 'X', 'X', 'X', 'X', 'X', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
-['X', 'X', 'X', 'X', '', 'X', 'X', 'X', 'X', 'X', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
+['X', 'P', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', '', '', '', '', ''],
+['X', '', '', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', '', 'X', 'X', 'X', 'X'],
+['X', '', '', 'X', '', '', '', '', '', '', '', '', '', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', '', 'X', 'X'],
+['X', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', '', '', '', '', '', '', '', '', '', '', '', 'X', 'X'],
+['X', 'X', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
+['X', 'X', '', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
+['X', 'X', 'X', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
 ['X', '', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
 ['X', 'X', 'X', 'X', '', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
 ['X', 'X', 'X', 'X', '', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
@@ -95,11 +71,40 @@ maze1 = [
 ['X', 'X', 'X', 'X', 'X', 'X', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
 ['X', 'X', 'X', 'X', 'X', 'X', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
 ['X', 'X', 'X', 'X', 'X', 'X', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
-['X', 'X', 'X', 'X', 'X', 'X', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
+['X', 'X', 'X', 'X', 'X', 'X', 'X', 'T', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
 ['X', 'X', 'X', 'X', '', '', '', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
 ['X', 'X', 'X', 'X', '', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X']]
 
-def setup_maze(maze):
+
+pen = Pen()
+player = Player()
+treasure = Treasure()
+path = Path()
+walls = []
+
+
+def bfs(maze,i,j):
+    q = deque()
+    q.append((i,j))
+    while q :
+        i,j = q.popleft()
+        if i < 0 or j < 0 or i >= len(maze) or j >= len(maze[0])  or (maze[i][j] == "X" ) or maze[i][j] == "-":
+            continue
+        if maze[i][j] == "T":
+
+            return True
+        maze[i][j] = "-"
+
+        path.goto(-288 + (j*24) ,  288 - (i*24))
+        path.stamp()
+        q.append((i+1 , j ))
+        q.append((i-1 , j ))
+        q.append((i , j-1 ))
+        q.append((i , j+1 ))
+        
+
+
+def setup_solved_maze(maze):
     for row in range(len(maze)):
         for col in range(len(maze[0])):
             char = maze[row][col]
@@ -113,32 +118,17 @@ def setup_maze(maze):
                 player.goto(screen_col,screen_row)
             if char == "T":
                 treasure.goto(screen_col,screen_row)
-            
 
+setup_solved_maze(maze1)
 
-# class Initialization
-pen = Pen()
-player = Player()
-treasure = Treasure()
-
-walls = []
-# Game setup
-setup_maze(maze1)
-
-
-# Keyboard
-turtle.listen()
-turtle.onkey(player.move_left , "Left")
-turtle.onkey(player.move_right , "Right")
-turtle.onkey(player.move_up , "Up")
-turtle.onkey(player.move_down , "Down")
-
+bfs(maze1,0,1)
+#print(maze1)
 window.tracer(0)
 while True:
 
-    if player.is_collision(treasure):
-        print("You Win")
-        treasure.destroy()
-        break
+    # if player.is_collision(treasure):
+    #     print("You Win")
+    #     treasure.destroy()
+    #     break
     window.update()
     pass
